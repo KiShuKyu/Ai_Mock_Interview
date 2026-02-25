@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Mock Interview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── SETUP ────────────────────────────────────── */
+  #setup {
+    background: white;
+    border-radius: 18px;
+    padding: 48px;
+    width: min(480px, 94vw);
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+  }
+
+  #setup h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  #setup p  { color: #6e6e73; font-size: 14px; margin-bottom: 32px; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3a3a3c;
+    margin-bottom: 6px;
+  }
+
+  select, input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1d1d1f;
+    background: #fafafa;
+    margin-bottom: 18px;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+
+  select:focus, input:focus { border-color: #0071e3; background: white; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #0071e3; color: white; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-danger  { background: #ff3b30; color: white; }
+  .btn-danger:hover  { opacity: 0.9; }
+  .btn-secondary { background: #e5e5ea; color: #1d1d1f; margin-top: 10px; }
+  .btn-secondary:hover { background: #d1d1d6; }
+
+  /* ── INTERVIEW ────────────────────────────────── */
+  #interview {
+    display: none;
+    background: white;
+    border-radius: 18px;
+    width: min(680px, 96vw);
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  .interview-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid #f2f2f7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .interview-header h2 { font-size: 17px; font-weight: 700; }
+  .session-meta { font-size: 13px; color: #6e6e73; margin-top: 2px; }
+
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .timer {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3a3a3c;
+    font-variant-numeric: tabular-nums;
+    background: #f2f2f7;
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+
+  .end-btn {
+    padding: 8px 16px;
+    background: #fff0f0;
+    color: #ff3b30;
+    border: 1.5px solid #ffcdd4;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .end-btn:hover { background: #ffe5e5; }
+
+  /* AI status bar */
+  .status-bar {
+    padding: 16px 28px;
+    background: #f9f9fb;
+    border-bottom: 1px solid #f2f2f7;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #c7c7cc;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+
+  .status-dot.speaking { background: #34c759; animation: pulse 1s infinite; }
+  .status-dot.listening { background: #0071e3; animation: pulse 0.8s infinite; }
+  .status-dot.connecting { background: #ff9500; animation: pulse 0.6s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+
+  #status-text { font-size: 14px; color: #3a3a3c; font-weight: 500; }
+
+  /* Waveform */
+  .wave {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: auto;
+  }
+
+  .wave-bar {
+    width: 3px;
+    height: 4px;
+    background: #c7c7cc;
+    border-radius: 2px;
+    transition: height 0.1s, background 0.3s;
+  }
+
+  .wave-bar.active {
+    background: #0071e3;
+    animation: wave-anim 0.7s ease-in-out infinite;
+  }
+
+  .wave-bar:nth-child(2).active { animation-delay: 0.1s; }
+  .wave-bar:nth-child(3).active { animation-delay: 0.2s; }
+  .wave-bar:nth-child(4).active { animation-delay: 0.3s; }
+  .wave-bar:nth-child(5).active { animation-delay: 0.2s; }
+  .wave-bar:nth-child(6).active { animation-delay: 0.1s; }
+
+  @keyframes wave-anim {
+    0%, 100% { height: 4px; }
+    50% { height: 20px; }
+  }
+
+  /* Transcript */
+  .transcript {
+    padding: 24px 28px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 380px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .msg {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 88%;
+    animation: msg-in 0.2s ease;
+  }
+
+  @keyframes msg-in { from { opacity: 0; transform: translateY(6px); } }
+
+  .msg.alex { align-self: flex-start; }
+  .msg.user { align-self: flex-end; }
+
+  .msg-label { font-size: 11px; font-weight: 600; color: #aeaeb2; text-transform: uppercase; letter-spacing: 0.05em; }
+  .msg.user .msg-label { text-align: right; }
+
+  .msg-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .msg.alex .msg-bubble { background: #f2f2f7; color: #1d1d1f; border-bottom-left-radius: 4px; }
+  .msg.user .msg-bubble { background: #0071e3; color: white; border-bottom-right-radius: 4px; }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aeaeb2;
+    font-size: 14px;
+    text-align: center;
+    padding: 40px;
+  }
+
+  /* Footer */
+  .interview-footer {
+    padding: 16px 28px;
+    border-top: 1px solid #f2f2f7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-note { font-size: 13px; color: #aeaeb2; }
+
+  .mic-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1.5px solid #e5e5ea;
+    background: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #3a3a3c;
+    transition: all 0.15s;
+  }
+
+  .mic-btn.muted { border-color: #ffcdd4; color: #ff3b30; background: #fff0f0; }
+  .mic-btn.active { border-color: #b5d5ff; color: #0071e3; background: #f0f7ff; }
+
+  /* ── RESULTS ──────────────────────────────────── */
+  #results {
+    display: none;
+    background: white;
+    border-radius: 18px;
+    padding: 48px;
+    width: min(480px, 94vw);
+    box-shadow: 0 4px 40px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  #results h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  #results p  { color: #6e6e73; font-size: 15px; margin-bottom: 32px; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+
+  .stat {
+    background: #f9f9fb;
+    border-radius: 12px;
+    padding: 18px 10px;
+  }
+
+  .stat-val { font-size: 26px; font-weight: 700; color: #0071e3; }
+  .stat-lbl { font-size: 12px; color: #6e6e73; margin-top: 4px; font-weight: 500; }
+
+  .transcript-replay {
+    text-align: left;
+    background: #f9f9fb;
+    border-radius: 12px;
+    padding: 16px;
+    max-height: 260px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #3a3a3c;
+    margin-bottom: 24px;
+  }
+
+  .replay-entry { margin-bottom: 12px; }
+  .replay-speaker { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #aeaeb2; margin-bottom: 2px; }
+  .replay-speaker.alex-lbl { color: #34c759; }
+  .replay-speaker.user-lbl { color: #0071e3; }
+
+  /* Error toast */
+  #error-toast {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff3b30;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 999;
+    box-shadow: 0 4px 20px rgba(255,59,48,0.3);
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup">
+  <h1>🎙️ AI Mock Interview</h1>
+  <p>Configure your session and start practising with a live AI interviewer.</p>
+
+  <div class="row">
+    <div>
+      <label>Target Role</label>
+      <select id="role">
+        <option>Software Engineer</option>
+        <option>Product Manager</option>
+        <option>Data Scientist</option>
+        <option>ML Engineer</option>
+        <option>Frontend Developer</option>
+        <option>Backend Developer</option>
+        <option>DevOps Engineer</option>
+        <option>UX Designer</option>
+        <option>Engineering Manager</option>
+        <option>Business Analyst</option>
+        <option>Marketing Manager</option>
+      </select>
+    </div>
+    <div>
+      <label>Company Type</label>
+      <select id="company">
+        <option>FAANG / Big Tech</option>
+        <option>Series B/C Startup</option>
+        <option>Early-Stage Startup</option>
+        <option>Consulting Firm</option>
+        <option>Enterprise</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>Interview Focus</label>
+      <select id="focus">
+        <option>Behavioral</option>
+        <option>Technical</option>
+        <option>System Design</option>
+        <option>Case Study</option>
+        <option>Mixed</option>
+      </select>
+    </div>
+    <div>
+      <label>Difficulty</label>
+      <select id="difficulty">
+        <option>Entry Level</option>
+        <option>Mid Level</option>
+        <option>Senior</option>
+        <option>Staff / Principal</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="startSession()">Start Interview →</button>
+</div>
+
+<!-- INTERVIEW -->
+<div id="interview">
+  <div class="interview-header">
+    <div>
+      <h2 id="header-role">Software Engineer</h2>
+      <div class="session-meta" id="header-meta">—</div>
+    </div>
+    <div class="header-right">
+      <div class="timer" id="timer">00:00</div>
+      <button class="end-btn" onclick="endSession()">End</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot connecting" id="status-dot"></div>
+    <span id="status-text">Connecting...</span>
+    <div class="wave" id="wave">
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+      <div class="wave-bar"></div>
+    </div>
+  </div>
+
+  <div class="transcript" id="transcript">
+    <div class="empty-state" id="empty-state">Waiting for the interviewer to connect…</div>
+  </div>
+
+  <div class="interview-footer">
+    <span class="footer-note">Speak naturally after Alex finishes.</span>
+    <button class="mic-btn active" id="mic-btn" onclick="toggleMic()">
+      🎙️ Mic On
+    </button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+  <h1>Session Complete 🎉</h1>
+  <p>Here's a summary of your mock interview.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="r-duration">—</div>
+      <div class="stat-lbl">Duration</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="r-questions">0</div>
+      <div class="stat-lbl">AI Questions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="r-turns">0</div>
+      <div class="stat-lbl">Your Turns</div>
+    </div>
+  </div>
+
+  <div class="transcript-replay" id="transcript-replay"></div>
+
+  <button class="btn btn-primary" onclick="goBack()">Try Again</button>
+  <button class="btn btn-secondary" onclick="goBack()">New Session</button>
+</div>
+
+<!-- Error toast -->
+<div id="error-toast"></div>
+
+<script>
+let ws = null;
+let micMuted = false;
+let timerInterval = null;
+let sessionStart = null;
+let transcript = [];
+let questionCount = 0;
+let userTurns = 0;
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+function show(id) {
+  ['setup','interview','results'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? 'flex' : 'none';
+  });
+  if (id === 'interview') document.getElementById('interview').style.flexDirection = 'column';
+}
+
+function showError(msg) {
+  const t = document.getElementById('error-toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 4000);
+}
+
+// ── timer ─────────────────────────────────────────────────────────────────────
+function startTimer() {
+  sessionStart = Date.now();
+  timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - sessionStart) / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2,'0');
+    const ss = String(s % 60).padStart(2,'0');
+    document.getElementById('timer').textContent = `${mm}:${ss}`;
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  const s = Math.floor((Date.now() - sessionStart) / 1000);
+  const mm = String(Math.floor(s / 60)).padStart(2,'0');
+  const ss = String(s % 60).padStart(2,'0');
+  return `${mm}:${ss}`;
+}
+
+// ── AI state visuals ──────────────────────────────────────────────────────────
+function setAIState(state) {
+  const dot  = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  const bars = document.querySelectorAll('.wave-bar');
+
+  dot.className = `status-dot ${state}`;
+  bars.forEach(b => b.classList.remove('active'));
+
+  if (state === 'speaking') {
+    text.textContent = 'Alex is speaking…';
+  } else if (state === 'listening') {
+    text.textContent = 'Your turn — speak now';
+    bars.forEach(b => b.classList.add('active'));
+  } else if (state === 'connecting') {
+    text.textContent = 'Connecting…';
+  } else {
+    text.textContent = 'Connected';
+  }
+}
+
+// ── transcript ────────────────────────────────────────────────────────────────
+function addMessage(speaker, text) {
+  document.getElementById('empty-state')?.remove();
+
+  transcript.push({ speaker, text });
+  if (speaker === 'Alex') questionCount++;
+  else userTurns++;
+
+  const box = document.getElementById('transcript');
+  const msg = document.createElement('div');
+  msg.className = `msg ${speaker === 'Alex' ? 'alex' : 'user'}`;
+  msg.innerHTML = `
+    <div class="msg-label">${speaker}</div>
+    <div class="msg-bubble">${text}</div>
+  `;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── mic toggle ────────────────────────────────────────────────────────────────
+function toggleMic() {
+  micMuted = !micMuted;
+  const btn = document.getElementById('mic-btn');
+  if (micMuted) {
+    btn.className = 'mic-btn muted';
+    btn.textContent = '🔇 Mic Off';
+    // Signal backend (optional: could send a WS message to pause mic queue)
+    ws?.send(JSON.stringify({ type: 'mic_mute', muted: true }));
+  } else {
+    btn.className = 'mic-btn active';
+    btn.textContent = '🎙️ Mic On';
+    ws?.send(JSON.stringify({ type: 'mic_mute', muted: false }));
+  }
+}
+
+// ── session start ─────────────────────────────────────────────────────────────
+function startSession() {
+  const config = {
+    role:       document.getElementById('role').value,
+    company:    document.getElementById('company').value,
+    focus:      document.getElementById('focus').value,
+    difficulty: document.getElementById('difficulty').value,
+  };
+
+  // Reset state
+  transcript = []; questionCount = 0; userTurns = 0; micMuted = false;
+  document.getElementById('mic-btn').className = 'mic-btn active';
+  document.getElementById('mic-btn').textContent = '🎙️ Mic On';
+  document.getElementById('transcript').innerHTML = '<div class="empty-state" id="empty-state">Waiting for the interviewer to connect…</div>';
+  document.getElementById('timer').textContent = '00:00';
+
+  // Update header
+  document.getElementById('header-role').textContent = config.role;
+  document.getElementById('header-meta').textContent = `${config.company} · ${config.focus} · ${config.difficulty}`;
+
+  show('interview');
+  setAIState('connecting');
+
+  // Connect WebSocket
+  const sessionId = Math.random().toString(36).slice(2);
+  const protocol  = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${protocol}://${location.host}/ws/${sessionId}`);
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify(config));
+    startTimer();
+  };
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === 'status' && msg.message === 'connected') {
+      setAIState('listening');
+    } else if (msg.type === 'ai_state') {
+      setAIState(msg.state);
+    } else if (msg.type === 'transcript') {
+      addMessage(msg.speaker, msg.text);
+    } else if (msg.type === 'error') {
+      showError('Error: ' + msg.message);
+    }
+  };
+
+  ws.onclose = () => {
+    if (document.getElementById('interview').style.display !== 'none') {
+      showError('Connection closed.');
+    }
+  };
+
+  ws.onerror = () => showError('WebSocket connection failed. Is the server running?');
+}
+
+// ── session end ───────────────────────────────────────────────────────────────
+function endSession() {
+  ws?.close();
+  const duration = stopTimer();
+
+  document.getElementById('r-duration').textContent  = duration;
+  document.getElementById('r-questions').textContent = questionCount;
+  document.getElementById('r-turns').textContent     = userTurns;
+
+  const replay = document.getElementById('transcript-replay');
+  if (!transcript.length) {
+    replay.innerHTML = '<span style="color:#aeaeb2">No transcript recorded.</span>';
+  } else {
+    replay.innerHTML = transcript.map(e => `
+      <div class="replay-entry">
+        <div class="replay-speaker ${e.speaker === 'Alex' ? 'alex-lbl' : 'user-lbl'}">${e.speaker}</div>
+        <div>${e.text}</div>
+      </div>
+    `).join('');
+  }
+
+  show('results');
+}
+
+function goBack() {
+  ws?.close();
+  show('setup');
+}
+</script>
+</body>
+</html>
