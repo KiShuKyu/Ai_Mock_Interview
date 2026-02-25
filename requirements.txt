@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+google-genai
+pyaudio
+python-dotenv
+websockets
+python>=3.11
